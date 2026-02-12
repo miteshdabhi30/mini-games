@@ -12,6 +12,19 @@ class MathRushBloc extends Bloc<MathRushEvent, MathRushState> {
     on<MathRushTicked>(_onTicked);
     on<MathRushAnswered>(_onAnswered);
     on<MathRushRestarted>(_onRestarted);
+    on<MathRushRevived>(_onRevived);
+  }
+
+  void _onRevived(MathRushRevived event, Emitter<MathRushState> emit) {
+    if (state.status != MathRushStatus.gameOver || state.reviveUsed) return;
+
+    emit(
+      state.copyWith(
+        status: MathRushStatus.playing,
+        timeRemaining: state.maxTime, // Reset time
+        reviveUsed: true,
+      ),
+    );
   }
 
   Future<void> _onStarted(

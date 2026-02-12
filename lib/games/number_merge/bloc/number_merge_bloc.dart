@@ -14,6 +14,31 @@ class NumberMergeBloc extends Bloc<NumberMergeEvent, NumberMergeState> {
     on<NumberMergeStarted>(_onStarted);
     on<NumberMergeColumnTapped>(_onColumnTapped);
     on<NumberMergeRestarted>(_onRestarted);
+    on<NumberMergeRevived>(_onRevived);
+  }
+
+  void _onRevived(NumberMergeRevived event, Emitter<NumberMergeState> emit) {
+    if (state.status != NumberMergeStatus.gameOver || state.reviveUsed) return;
+
+    // Revive Logic: Clear top 3 rows of every column to give space
+    final newGrid = [for (final col in state.grid) List<int>.from(col)];
+
+    for (int c = 0; c < cols; c++) {
+      for (int r = 0; r < 3; r++) {
+        // Clear top 3 rows (0, 1, 2)
+        if (r < rows) {
+          newGrid[c][r] = 0;
+        }
+      }
+    }
+
+    emit(
+      state.copyWith(
+        status: NumberMergeStatus.playing,
+        grid: newGrid,
+        reviveUsed: true,
+      ),
+    );
   }
 
   void _onStarted(NumberMergeStarted event, Emitter<NumberMergeState> emit) {

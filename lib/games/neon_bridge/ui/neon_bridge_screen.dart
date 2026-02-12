@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:green_object/games/neon_bridge/bloc/neon_bridge_bloc.dart';
@@ -23,8 +24,22 @@ class NeonBridgeScreen extends StatelessWidget {
   }
 }
 
-class _NeonBridgeView extends StatelessWidget {
+class _NeonBridgeView extends StatefulWidget {
   const _NeonBridgeView();
+
+  @override
+  State<_NeonBridgeView> createState() => _NeonBridgeViewState();
+}
+
+class _NeonBridgeViewState extends State<_NeonBridgeView> {
+  late DateTime _startTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Neon Bridge');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +50,13 @@ class _NeonBridgeView extends StatelessWidget {
         listener: (context, state) {
           if (state.status == GameStatus.gameOver) {
             AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Neon Bridge',
+              state.score,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
+          } else if (state.status == GameStatus.waiting) {
+            _startTime = DateTime.now();
           }
         },
         builder: (context, state) {
@@ -126,7 +148,9 @@ class _NeonBridgeView extends StatelessWidget {
                                 const SizedBox(height: 20),
                                 ElevatedButton(
                                   onPressed: () {
-                                    context.read<NeonBridgeBloc>().add(GameReset());
+                                    context.read<NeonBridgeBloc>().add(
+                                      GameReset(),
+                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
@@ -144,30 +168,53 @@ class _NeonBridgeView extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                OutlinedButton(
-                                  onPressed: () async {
-                                    const int rewardBonus = 1;
-                                    final rewarded = await AdManager.instance
-                                        .showRewarded(
-                                          onRewardEarned: () {
-                                            context.read<NeonBridgeBloc>().add(
-                                              const GameReset(bonusScore: rewardBonus),
-                                            );
-                                          },
-                                        );
-                                    if (!rewarded && context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Ad not ready. Try again soon."),
-                                          duration: Duration(seconds: 2),
-                                        ),
-                                      );
+                                BlocBuilder<NeonBridgeBloc, NeonBridgeState>(
+                                  buildWhen: (previous, current) =>
+                                      previous.reviveUsed != current.reviveUsed,
+                                  builder: (context, state) {
+                                    if (state.reviveUsed) {
+                                      return const SizedBox.shrink();
                                     }
+                                    return Column(
+                                      children: [
+                                        const SizedBox(height: 12),
+                                        OutlinedButton(
+                                          onPressed: () async {
+                                            final rewarded = await AdManager
+                                                .instance
+                                                .showRewarded(
+                                                  onRewardEarned: () {
+                                                    context
+                                                        .read<NeonBridgeBloc>()
+                                                        .add(GameRevived());
+                                                  },
+                                                  rewardType: 'revive',
+                                                );
+                                            if (!rewarded && context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    "Ad not ready. Try again soon.",
+                                                  ),
+                                                  duration: Duration(
+                                                    seconds: 2,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          child: Text(
+                                            "WATCH AD TO CONTINUE",
+                                            style: GoogleFonts.pressStart2p(
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
                                   },
-                                  child: Text(
-                                    "WATCH AD +1",
-                                    style: GoogleFonts.pressStart2p(fontSize: 12),
-                                  ),
                                 ),
                               ],
                             ),
@@ -242,7 +289,10 @@ class _GamePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Simple square player
-    canvas.drawRect(Rect.fromLTWH(state.playerX - 10, centerY - 20, 20, 20), paintPlayer);
+    canvas.drawRect(
+      Rect.fromLTWH(state.playerX - 10, centerY - 20, 20, 20),
+      paintPlayer,
+    );
   }
 
   @override

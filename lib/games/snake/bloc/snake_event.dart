@@ -41,3 +41,5 @@ class SnakeRestarted extends SnakeEvent {
   @override
   List<Object> get props => [bonusScore];
 }
+
+class SnakeRevived extends SnakeEvent {}

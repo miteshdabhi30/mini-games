@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:green_object/bloc/game_bloc.dart';
 import 'package:green_object/ui/widgets/game_canvas.dart';
@@ -26,11 +27,14 @@ class _GameScreenState extends State<GameScreen>
     with SingleTickerProviderStateMixin {
   late Ticker _ticker;
   double _lastTickTime = 0.0;
+  late DateTime _startTime;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Dodge');
   }
 
   @override
@@ -63,10 +67,16 @@ class _GameScreenState extends State<GameScreen>
         listener: (context, state) {
           if (state.status == GameStatus.playing && !_ticker.isActive) {
             _lastTickTime = 0; // Reset tick time on restart
+            _startTime = DateTime.now(); // Reset start time
             _ticker.start();
           } else if (state.status == GameStatus.gameOver && _ticker.isActive) {
             _ticker.stop();
             AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Dodge',
+              state.score.toInt(),
+              DateTime.now().difference(_startTime).inSeconds,
+            );
           }
         },
         builder: (context, state) {

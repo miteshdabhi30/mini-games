@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:green_object/games/tower_stack/bloc/tower_stack_bloc.dart';
 import 'package:green_object/games/tower_stack/bloc/tower_stack_event.dart';
@@ -25,11 +26,14 @@ class _TowerStackScreenState extends State<TowerStackScreen>
     with SingleTickerProviderStateMixin {
   late Ticker _ticker;
   double _lastTickTime = 0.0;
+  late DateTime _startTime;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Tower Stack');
   }
 
   @override
@@ -67,11 +71,17 @@ class _TowerStackScreenState extends State<TowerStackScreen>
         listener: (context, state) {
           if (state.status == TowerStackStatus.playing && !_ticker.isActive) {
             _lastTickTime = 0;
+            _startTime = DateTime.now();
             _ticker.start();
           } else if (state.status == TowerStackStatus.gameOver &&
               _ticker.isActive) {
             _ticker.stop();
             AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Tower Stack',
+              state.score,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
           }
         },
         builder: (context, state) {
@@ -192,6 +202,7 @@ class _TowerStackScreenState extends State<TowerStackScreen>
                                         TowerStackRevived(),
                                       );
                                     },
+                                    rewardType: 'revive',
                                   );
                               if (!rewarded && context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(

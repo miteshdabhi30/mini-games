@@ -77,13 +77,8 @@ class BallSortBloc extends Bloc<BallSortEvent, BallSortState> {
     ];
 
     // Create sorted tubes
-    List<List<Color>> tubes = [];
-    for (int i = 0; i < numColors; i++) {
-      tubes.add(List.filled(tubeCapacity, palette[i % palette.length]));
-    }
-    for (int i = 0; i < numEmptyTubes; i++) {
-      tubes.add([]);
-    }
+    // Create sorted tubes (Conceptually, but we assign via shuffled)
+    // The previous loop generating 'tubes' was dead code.
 
     // Shuffle by making valid reverse moves
     // Just randomizing might create unsolvable states?
@@ -233,7 +228,7 @@ class BallSortBloc extends Bloc<BallSortEvent, BallSortState> {
 
     // Validation: Must match top color
     final Color topBall = tubes[toIndex].last;
-    return ballToMove == topBall;
+    return ballToMove.value == topBall.value;
   }
 
   bool _checkWin(List<List<Color>> tubes) {

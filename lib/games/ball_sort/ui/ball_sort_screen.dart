@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:green_object/games/ball_sort/bloc/ball_sort_bloc.dart';
@@ -7,7 +8,7 @@ import 'package:green_object/games/ball_sort/bloc/ball_sort_state.dart';
 import 'package:green_object/ui/widgets/ad_rectangle.dart';
 import 'package:green_object/utils/ad_manager.dart';
 
-class BallSortScreen extends StatelessWidget {
+class BallSortScreen extends StatefulWidget {
   const BallSortScreen({super.key});
 
   static Route route() {
@@ -17,6 +18,20 @@ class BallSortScreen extends StatelessWidget {
         child: const BallSortScreen(),
       ),
     );
+  }
+
+  @override
+  State<BallSortScreen> createState() => _BallSortScreenState();
+}
+
+class _BallSortScreenState extends State<BallSortScreen> {
+  late DateTime _startTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Ball Sort');
   }
 
   @override
@@ -52,6 +67,18 @@ class BallSortScreen extends StatelessWidget {
           if (state.status == BallSortStatus.levelCompleted) {
             // Show Win Dialog
             AdManager.instance.onGameOver(); // Reusing full screen ad logic
+            AnalyticsService.instance.logGameEnd(
+              'Ball Sort',
+              state.level,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
+            // Reset timer for next level? or wait until next level starts?
+            // When 'Next Level' is clicked, it sends BallSortNextLevel.
+            // Status changes to playing?
+            // I should reset timer when level changes.
+            _startTime =
+                DateTime.now(); // Reset for next level measurement from now (idle time included? maybe ok)
+
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -96,6 +123,107 @@ class BallSortScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            );
+          } else if (state.status == BallSortStatus.gameOver) {
+            // Show Game Over / No Moves Dialog
+            AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Ball Sort',
+              state.level,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => AlertDialog(
+                backgroundColor: const Color(0xFF16213e),
+                title: Text(
+                  "NO MOVES!",
+                  style: GoogleFonts.pressStart2p(
+                    color: Colors.redAccent,
+                    fontSize: 18,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "You're stuck!",
+                      style: GoogleFonts.pressStart2p(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (!state.reviveUsed)
+                      OutlinedButton(
+                        onPressed: () async {
+                          Navigator.of(
+                            context,
+                          ).pop(); // Close dialog to show ad? Or show ad then close?
+                          final rewarded = await AdManager.instance
+                              .showRewarded(
+                                onRewardEarned: () {
+                                  context.read<BallSortBloc>().add(
+                                    const BallSortRevived(),
+                                  );
+                                },
+                                rewardType: 'revive',
+                              );
+                          if (!rewarded) {
+                            // If ad fails, keep dialog open?
+                            // For now, assume success or just close.
+                            // Ideally show snackbar.
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.amberAccent),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: Text(
+                          "WATCH AD\n+1 TUBE",
+                          style: GoogleFonts.pressStart2p(
+                            color: Colors.amberAccent,
+                            fontSize: 10,
+                            height: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    if (state.reviveUsed)
+                      Text(
+                        "No more revives!",
+                        style: GoogleFonts.pressStart2p(
+                          color: Colors.grey,
+                          fontSize: 10,
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        context.read<BallSortBloc>().add(
+                          const BallSortRestarted(),
+                        );
+                      },
+                      child: Text(
+                        "RESTART LEVEL",
+                        style: GoogleFonts.pressStart2p(
+                          color: Colors.white60,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const SizedBox(height: 250, child: AdRectangle()),
+                  ],
+                ),
               ),
             );
           }

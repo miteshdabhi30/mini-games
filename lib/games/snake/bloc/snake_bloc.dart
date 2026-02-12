@@ -13,6 +13,7 @@ class SnakeBloc extends Bloc<SnakeEvent, SnakeState> {
     on<SnakeTicked>(_onTicked);
     on<SnakeDirectionChanged>(_onDirectionChanged);
     on<SnakeRestarted>(_onRestarted);
+    on<SnakeRevived>(_onRevived);
   }
 
   Future<void> _onStarted(SnakeStarted event, Emitter<SnakeState> emit) async {
@@ -37,6 +38,31 @@ class SnakeBloc extends Bloc<SnakeEvent, SnakeState> {
         dy: 1, // Moving down
         score: event.bonusScore,
         moveInterval: 0.15,
+        reviveUsed: false,
+      ),
+    );
+  }
+
+  void _onRevived(SnakeRevived event, Emitter<SnakeState> emit) {
+    if (state.status != SnakeStatus.gameOver || state.reviveUsed) return;
+
+    // Revive Logic: Reset snake to center, length 3, keep score
+    final startX = gridColumns ~/ 2;
+    final startY = gridRows ~/ 2;
+    final snake = [
+      SnakePoint(startX, startY),
+      SnakePoint(startX, startY - 1),
+      SnakePoint(startX, startY - 2),
+    ];
+
+    emit(
+      state.copyWith(
+        status: SnakeStatus.playing,
+        snake: snake,
+        food: _generateFood(snake),
+        dx: 0,
+        dy: 1,
+        reviveUsed: true,
       ),
     );
   }

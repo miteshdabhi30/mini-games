@@ -10,6 +10,7 @@ class PatternMatchState extends Equatable {
   final int score;
   final int highScore;
   final int? highlightedButton;
+  final bool reviveUsed;
 
   const PatternMatchState({
     this.status = PatternMatchStatus.idle,
@@ -19,6 +20,7 @@ class PatternMatchState extends Equatable {
     this.score = 0,
     this.highScore = 0,
     this.highlightedButton,
+    this.reviveUsed = false,
   });
 
   PatternMatchState copyWith({
@@ -29,6 +31,7 @@ class PatternMatchState extends Equatable {
     int? score,
     int? highScore,
     int? highlightedButton,
+    bool? reviveUsed,
   }) {
     return PatternMatchState(
       status: status ?? this.status,
@@ -38,6 +41,7 @@ class PatternMatchState extends Equatable {
       score: score ?? this.score,
       highScore: highScore ?? this.highScore,
       highlightedButton: highlightedButton,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
 
@@ -50,5 +54,6 @@ class PatternMatchState extends Equatable {
     score,
     highScore,
     highlightedButton,
+    reviveUsed,
   ];
 }

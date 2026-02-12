@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:green_object/games/pattern_match/bloc/pattern_match_bloc.dart';
 import 'package:green_object/games/pattern_match/bloc/pattern_match_event.dart';
@@ -6,7 +7,7 @@ import 'package:green_object/games/pattern_match/bloc/pattern_match_state.dart';
 import 'package:green_object/ui/widgets/ad_rectangle.dart';
 import 'package:green_object/utils/ad_manager.dart';
 
-class PatternMatchScreen extends StatelessWidget {
+class PatternMatchScreen extends StatefulWidget {
   static Widget route() {
     return BlocProvider(
       create: (context) => PatternMatchBloc()..add(const PatternMatchStarted()),
@@ -17,10 +18,38 @@ class PatternMatchScreen extends StatelessWidget {
   const PatternMatchScreen({super.key});
 
   @override
+  State<PatternMatchScreen> createState() => _PatternMatchScreenState();
+}
+
+class _PatternMatchScreenState extends State<PatternMatchScreen> {
+  late DateTime _startTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Pattern Match');
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1a1a2e),
-      body: BlocBuilder<PatternMatchBloc, PatternMatchState>(
+      body: BlocConsumer<PatternMatchBloc, PatternMatchState>(
+        listener: (context, state) {
+          if (state.status == PatternMatchStatus.gameOver) {
+            AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Pattern Match',
+              state.score,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
+          } else if (state.status == PatternMatchStatus.idle &&
+              state.score == 0) {
+            // Assuming idle with score 0 means restart/start
+            _startTime = DateTime.now();
+          }
+        },
         builder: (context, state) {
           return Stack(
             children: [
@@ -251,40 +280,56 @@ class PatternMatchScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () async {
-                      const int rewardBonus = 50;
-                      final rewarded = await AdManager.instance.showRewarded(
-                        onRewardEarned: () {
-                          context.read<PatternMatchBloc>().add(
-                            const PatternMatchRestarted(
-                              bonusScore: rewardBonus,
+                  BlocBuilder<PatternMatchBloc, PatternMatchState>(
+                    buildWhen: (previous, current) =>
+                        previous.reviveUsed != current.reviveUsed,
+                    builder: (context, state) {
+                      if (state.reviveUsed) return const SizedBox.shrink();
+                      return Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () async {
+                              final rewarded = await AdManager.instance
+                                  .showRewarded(
+                                    onRewardEarned: () {
+                                      context.read<PatternMatchBloc>().add(
+                                        const PatternMatchRevived(),
+                                      );
+                                    },
+                                    rewardType: 'revive',
+                                  );
+                              if (!rewarded && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Ad not ready. Try again soon.",
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.54),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 16,
+                              ),
                             ),
-                          );
-                        },
-                      );
-                      if (!rewarded && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Ad not ready. Try again soon."),
-                            duration: Duration(seconds: 2),
+                            child: const Text(
+                              "WATCH AD TO CONTINUE",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
-                        );
-                      }
+                        ],
+                      );
                     },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.54),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 16,
-                      ),
-                    ),
-                    child: const Text(
-                      "WATCH AD +50",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
                   ),
                 ],
               ),

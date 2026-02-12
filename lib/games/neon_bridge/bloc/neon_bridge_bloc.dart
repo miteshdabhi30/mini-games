@@ -19,6 +19,7 @@ class NeonBridgeBloc extends Bloc<NeonBridgeEvent, NeonBridgeState> {
     on<StopGrow>(_onStopGrow);
     on<GameTick>(_onGameTick);
     on<GameReset>(_onGameReset);
+    on<GameRevived>(_onRevived);
   }
 
   void _onGameStarted(GameStarted event, Emitter<NeonBridgeState> emit) {
@@ -27,6 +28,21 @@ class NeonBridgeBloc extends Bloc<NeonBridgeEvent, NeonBridgeState> {
 
   void _onGameReset(GameReset event, Emitter<NeonBridgeState> emit) {
     _resetGame(emit, bonusScore: event.bonusScore);
+  }
+
+  void _onRevived(GameRevived event, Emitter<NeonBridgeState> emit) {
+    if (state.status != GameStatus.gameOver || state.reviveUsed) return;
+
+    emit(
+      state.copyWith(
+        status: GameStatus.waiting,
+        bridgeHeight: 0,
+        bridgeAngle: 0,
+        reviveUsed: true,
+        playerX: state.platforms[0].width - 20,
+      ),
+    );
+    _startTicker();
   }
 
   void _resetGame(Emitter<NeonBridgeState> emit, {int bonusScore = 0}) {

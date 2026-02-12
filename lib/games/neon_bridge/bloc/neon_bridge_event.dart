@@ -32,3 +32,5 @@ class GameReset extends NeonBridgeEvent {
 }
 
 class AnimationCompleted extends NeonBridgeEvent {}
+
+class GameRevived extends NeonBridgeEvent {}

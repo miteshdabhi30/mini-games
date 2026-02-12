@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-enum BallSortStatus { initial, playing, levelCompleted }
+enum BallSortStatus { initial, playing, levelCompleted, gameOver }
 
 class BallSortState extends Equatable {
   final BallSortStatus status;
@@ -10,6 +10,7 @@ class BallSortState extends Equatable {
   final int level;
   final int moves;
   final List<List<List<Color>>> history; // For undo
+  final bool reviveUsed;
 
   const BallSortState({
     this.status = BallSortStatus.initial,
@@ -18,6 +19,7 @@ class BallSortState extends Equatable {
     this.level = 1,
     this.moves = 0,
     this.history = const [],
+    this.reviveUsed = false,
   });
 
   BallSortState copyWith({
@@ -27,6 +29,7 @@ class BallSortState extends Equatable {
     int? level,
     int? moves,
     List<List<List<Color>>>? history,
+    bool? reviveUsed,
   }) {
     return BallSortState(
       status: status ?? this.status,
@@ -35,6 +38,7 @@ class BallSortState extends Equatable {
       level: level ?? this.level,
       moves: moves ?? this.moves,
       history: history ?? this.history,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
 
@@ -47,6 +51,7 @@ class BallSortState extends Equatable {
       level: level,
       moves: moves,
       history: history,
+      reviveUsed: reviveUsed,
     );
   }
 
@@ -57,6 +62,7 @@ class BallSortState extends Equatable {
     selectedTubeIndex,
     level,
     moves,
-    history, // history equality might be expensive but okay for now
+    history,
+    reviveUsed,
   ];
 }

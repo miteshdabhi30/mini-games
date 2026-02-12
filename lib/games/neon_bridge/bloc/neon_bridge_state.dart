@@ -29,6 +29,7 @@ class NeonBridgeState extends Equatable {
   final double bridgeAngle; // 0 is vertical up, 90 is horizontal right
   final double playerX;
   final List<Platform> platforms;
+  final bool reviveUsed;
 
   const NeonBridgeState({
     this.status = GameStatus.initial,
@@ -38,6 +39,7 @@ class NeonBridgeState extends Equatable {
     this.bridgeAngle = 0.0,
     this.playerX = 50.0, // Start slightly inset on first platform
     this.platforms = const [],
+    this.reviveUsed = false,
   });
 
   NeonBridgeState copyWith({
@@ -48,6 +50,7 @@ class NeonBridgeState extends Equatable {
     double? bridgeAngle,
     double? playerX,
     List<Platform>? platforms,
+    bool? reviveUsed,
   }) {
     return NeonBridgeState(
       status: status ?? this.status,
@@ -57,6 +60,7 @@ class NeonBridgeState extends Equatable {
       bridgeAngle: bridgeAngle ?? this.bridgeAngle,
       playerX: playerX ?? this.playerX,
       platforms: platforms ?? this.platforms,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
 
@@ -69,5 +73,6 @@ class NeonBridgeState extends Equatable {
     bridgeAngle,
     playerX,
     platforms,
+    reviveUsed,
   ];
 }

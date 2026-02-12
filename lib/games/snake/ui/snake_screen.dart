@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:green_object/games/snake/bloc/snake_bloc.dart';
 import 'package:green_object/games/snake/bloc/snake_event.dart';
@@ -25,11 +26,14 @@ class _SnakeScreenState extends State<SnakeScreen>
     with SingleTickerProviderStateMixin {
   late Ticker _ticker;
   double _lastTickTime = 0.0;
+  late DateTime _startTime;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Snake');
   }
 
   @override
@@ -67,10 +71,16 @@ class _SnakeScreenState extends State<SnakeScreen>
         listener: (context, state) {
           if (state.status == SnakeStatus.playing && !_ticker.isActive) {
             _lastTickTime = 0;
+            _startTime = DateTime.now();
             _ticker.start();
           } else if (state.status == SnakeStatus.gameOver && _ticker.isActive) {
             _ticker.stop();
             AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Snake',
+              state.score,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
           }
         },
         builder: (context, state) {
@@ -148,11 +158,12 @@ class _SnakeScreenState extends State<SnakeScreen>
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: 24,
+                bottom: 60,
                 child: _buildDirectionPad(),
               ),
 
-              if (state.status == SnakeStatus.gameOver) _buildGameOver(context, state),
+              if (state.status == SnakeStatus.gameOver)
+                _buildGameOver(context, state),
             ],
           );
         },
@@ -192,7 +203,10 @@ class _SnakeScreenState extends State<SnakeScreen>
     );
   }
 
-  Widget _directionButton({required IconData icon, required VoidCallback onTap}) {
+  Widget _directionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return Material(
       color: Colors.greenAccent.withValues(alpha: 0.16),
       borderRadius: BorderRadius.circular(12),
@@ -250,26 +264,41 @@ class _SnakeScreenState extends State<SnakeScreen>
                     child: const Text("RETRY"),
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () async {
-                      const int rewardBonus = 50;
-                      final rewarded = await AdManager.instance.showRewarded(
-                        onRewardEarned: () {
-                          context.read<SnakeBloc>().add(
-                            const SnakeRestarted(bonusScore: rewardBonus),
-                          );
-                        },
-                      );
-                      if (!rewarded && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Ad not ready. Try again soon."),
-                            duration: Duration(seconds: 2),
+                  BlocBuilder<SnakeBloc, SnakeState>(
+                    buildWhen: (previous, current) =>
+                        previous.reviveUsed != current.reviveUsed,
+                    builder: (context, state) {
+                      if (state.reviveUsed) return const SizedBox.shrink();
+                      return Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () async {
+                              final rewarded = await AdManager.instance
+                                  .showRewarded(
+                                    onRewardEarned: () {
+                                      context.read<SnakeBloc>().add(
+                                        SnakeRevived(),
+                                      );
+                                    },
+                                    rewardType: 'revive',
+                                  );
+                              if (!rewarded && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Ad not ready. Try again soon.",
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text("WATCH AD TO CONTINUE"),
                           ),
-                        );
-                      }
+                        ],
+                      );
                     },
-                    child: const Text("WATCH AD +50"),
                   ),
                 ],
               ),

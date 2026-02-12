@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'package:green_object/services/analytics_service.dart';
 import 'ad_ids.dart';
 
 class AdManager {
@@ -35,7 +36,10 @@ class AdManager {
 
   bool get isRewardedReady => _rewarded != null;
 
-  Future<bool> showRewarded({required VoidCallback onRewardEarned}) async {
+  Future<bool> showRewarded({
+    required VoidCallback onRewardEarned,
+    required String rewardType,
+  }) async {
     final ad = _rewarded;
     if (ad == null) {
       _loadRewarded();
@@ -61,6 +65,7 @@ class AdManager {
     ad.show(
       onUserEarnedReward: (ad, reward) {
         onRewardEarned();
+        AnalyticsService.instance.logAdWatched('rewarded', rewardType);
         if (!completer.isCompleted) completer.complete(true);
       },
     );
@@ -96,6 +101,7 @@ class AdManager {
     );
 
     ad?.show();
+    AnalyticsService.instance.logAdWatched('interstitial', 'game_over');
   }
 
   void _loadInterstitial() {

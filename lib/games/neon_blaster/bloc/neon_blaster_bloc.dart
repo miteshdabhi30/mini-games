@@ -27,6 +27,7 @@ class NeonBlasterBloc extends Bloc<NeonBlasterEvent, NeonBlasterState> {
     on<NeonBlasterTicked>(_onTicked);
     on<NeonBlasterPlayerMoved>(_onPlayerMoved);
     on<NeonBlasterRestarted>(_onRestarted);
+    on<NeonBlasterRevived>(_onRevived);
   }
 
   void _onStarted(NeonBlasterStarted event, Emitter<NeonBlasterState> emit) {
@@ -65,6 +66,23 @@ class NeonBlasterBloc extends Bloc<NeonBlasterEvent, NeonBlasterState> {
     Emitter<NeonBlasterState> emit,
   ) {
     add(NeonBlasterStarted(bonusScore: event.bonusScore));
+  }
+
+  void _onRevived(NeonBlasterRevived event, Emitter<NeonBlasterState> emit) {
+    if (state.status != NeonBlasterStatus.gameOver || state.reviveUsed) return;
+
+    emit(
+      state.copyWith(
+        status: NeonBlasterStatus.playing,
+        bullets: [],
+        enemies: [],
+        powerUps: [],
+        reviveUsed: true,
+        shieldTimer: 3.0, // Grant temporary shield
+        spawnTimer: 0,
+        waveDelayTimer: 2.0, // Brief pause before enemies return
+      ),
+    );
   }
 
   void _onPlayerMoved(
@@ -107,7 +125,8 @@ class NeonBlasterBloc extends Bloc<NeonBlasterEvent, NeonBlasterState> {
     final spawnInterval = max(
       _minSpawnInterval,
       _baseSpawnInterval -
-          ((state.level - 1) * 0.04), // Slower spawn rate increase
+          ((state.level - 1) *
+              0.025), // Reduced from 0.04 to 0.025 for slower progression
     );
     final fireInterval = max(
       0.08,
@@ -117,8 +136,8 @@ class NeonBlasterBloc extends Bloc<NeonBlasterEvent, NeonBlasterState> {
     );
     final bulletSpeed = _bulletSpeed * (hasOverdrive ? 1.25 : 1.0);
     final enemySpeed =
-        (_enemySpeed + state.level * 0.015) *
-        (hasSlow ? 0.58 : 1.0); // Slower speed increase
+        (_enemySpeed + state.level * 0.008) * // Reduced from 0.015 to 0.008
+        (hasSlow ? 0.58 : 1.0);
 
     final List<BlasterBullet> bullets = [
       for (final b in state.bullets)
@@ -521,7 +540,6 @@ class NeonBlasterBloc extends Bloc<NeonBlasterEvent, NeonBlasterState> {
 
   BlasterEnemy _spawnWaveEnemy(int level, WavePattern pattern, int stepCount) {
     int hp;
-    bool isBoss = false;
     // Base stats
     final pool = <int>[1, 1, 1, 2, 2, 3, 5, 5, 8, 10];
     hp = pool[_random.nextInt(pool.length)] + (level ~/ 8);
@@ -574,10 +592,10 @@ class NeonBlasterBloc extends Bloc<NeonBlasterEvent, NeonBlasterState> {
     return BlasterEnemy(
       x: x,
       y: y,
-      radius: (isBoss ? 0.055 : 0.03) + min(0.02, hp * 0.0012),
+      radius: 0.03 + min(0.02, hp * 0.0012),
       hp: hp,
       maxHp: hp,
-      isBoss: isBoss,
+      isBoss: false,
     );
   }
 

@@ -42,3 +42,5 @@ class NeonBlasterRestarted extends NeonBlasterEvent {
   @override
   List<Object> get props => [bonusScore];
 }
+
+class NeonBlasterRevived extends NeonBlasterEvent {}

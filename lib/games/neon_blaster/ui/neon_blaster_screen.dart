@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:green_object/services/analytics_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -27,11 +28,14 @@ class _NeonBlasterScreenState extends State<NeonBlasterScreen>
     with SingleTickerProviderStateMixin {
   late Ticker _ticker;
   double _lastTickTime = 0;
+  late DateTime _startTime;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Neon Blaster');
   }
 
   @override
@@ -67,11 +71,17 @@ class _NeonBlasterScreenState extends State<NeonBlasterScreen>
         listener: (context, state) {
           if (state.status == NeonBlasterStatus.playing && !_ticker.isActive) {
             _lastTickTime = 0;
+            _startTime = DateTime.now();
             _ticker.start();
           } else if (state.status == NeonBlasterStatus.gameOver &&
               _ticker.isActive) {
             _ticker.stop();
             AdManager.instance.onGameOver();
+            AnalyticsService.instance.logGameEnd(
+              'Neon Blaster',
+              state.score,
+              DateTime.now().difference(_startTime).inSeconds,
+            );
           }
         },
         builder: (context, state) {
@@ -273,26 +283,41 @@ class _NeonBlasterScreenState extends State<NeonBlasterScreen>
                     child: const Text("RETRY"),
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () async {
-                      const int rewardBonus = 100;
-                      final rewarded = await AdManager.instance.showRewarded(
-                        onRewardEarned: () {
-                          context.read<NeonBlasterBloc>().add(
-                            const NeonBlasterRestarted(bonusScore: rewardBonus),
-                          );
-                        },
-                      );
-                      if (!rewarded && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Ad not ready. Try again soon."),
-                            duration: Duration(seconds: 2),
+                  BlocBuilder<NeonBlasterBloc, NeonBlasterState>(
+                    buildWhen: (previous, current) =>
+                        previous.reviveUsed != current.reviveUsed,
+                    builder: (context, state) {
+                      if (state.reviveUsed) return const SizedBox.shrink();
+                      return Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () async {
+                              final rewarded = await AdManager.instance
+                                  .showRewarded(
+                                    onRewardEarned: () {
+                                      context.read<NeonBlasterBloc>().add(
+                                        NeonBlasterRevived(),
+                                      );
+                                    },
+                                    rewardType: 'revive',
+                                  );
+                              if (!rewarded && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Ad not ready. Try again soon.",
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text("WATCH AD TO CONTINUE"),
                           ),
-                        );
-                      }
+                        ],
+                      );
                     },
-                    child: const Text("WATCH AD +100"),
                   ),
                 ],
               ),
@@ -370,6 +395,72 @@ class _BlasterPainter extends CustomPainter {
           center - Offset(textPainter.width / 2, textPainter.height / 2),
         );
       }
+    }
+
+    // Draw PowerUps
+    for (final p in state.powerUps) {
+      final center = Offset(p.x * size.width, p.y * size.height);
+      final radius = 0.035 * size.width; // slightly larger than default rocks
+
+      Color powerColor = Colors.white;
+      IconData icon = Icons.star;
+
+      switch (p.type) {
+        case BlasterPowerType.doubleShot:
+          powerColor = Colors.amber;
+          icon = Icons.looks_two;
+          break;
+        case BlasterPowerType.rapidFire:
+          powerColor = Colors.orange;
+          icon = Icons.flash_on;
+          break;
+        case BlasterPowerType.slowMotion:
+          powerColor = Colors.lightBlue;
+          icon = Icons.hourglass_bottom;
+          break;
+        case BlasterPowerType.circularFire:
+          powerColor = Colors.purpleAccent;
+          icon = Icons.donut_large;
+          break;
+        case BlasterPowerType.shield:
+          powerColor = Colors.cyan;
+          icon = Icons.shield;
+          break;
+        case BlasterPowerType.magnet:
+          powerColor =
+              Colors.pinkAccent; // Distinct from enemies? Enemies are Pink.
+          // Let's use Magenta or a different shade, or just rely on the Icon.
+          // Enemies are PinkAccent.
+          powerColor = Colors.purple;
+          icon = Icons.bolt;
+          break;
+      }
+
+      final powerPaint = Paint()
+        ..color = powerColor.withValues(alpha: 0.2)
+        ..style = PaintingStyle.fill;
+      final powerStroke = Paint()
+        ..color = powerColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
+
+      canvas.drawCircle(center, radius, powerPaint);
+      canvas.drawCircle(center, radius, powerStroke);
+
+      textPainter.text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontSize: radius * 1.5,
+          fontFamily: icon.fontFamily,
+          color: powerColor,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        center - Offset(textPainter.width / 2, textPainter.height / 2),
+      );
     }
 
     final shipX = state.playerX * size.width;

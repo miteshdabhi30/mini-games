@@ -146,6 +146,7 @@ class NeonBlasterState extends Equatable {
     this.currentWavePattern = WavePattern.random,
     this.waveSpawnCount = 0,
     this.waveDelayTimer = 0,
+    this.reviveUsed = false,
   });
 
   NeonBlasterState copyWith({
@@ -172,6 +173,7 @@ class NeonBlasterState extends Equatable {
     WavePattern? currentWavePattern,
     int? waveSpawnCount,
     double? waveDelayTimer,
+    bool? reviveUsed,
   }) {
     return NeonBlasterState(
       status: status ?? this.status,
@@ -197,8 +199,11 @@ class NeonBlasterState extends Equatable {
       currentWavePattern: currentWavePattern ?? this.currentWavePattern,
       waveSpawnCount: waveSpawnCount ?? this.waveSpawnCount,
       waveDelayTimer: waveDelayTimer ?? this.waveDelayTimer,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
+
+  final bool reviveUsed;
 
   bool get hasDoubleShot => doubleShotTimer > 0;
   bool get hasRapidFire => rapidFireTimer > 0;
@@ -233,5 +238,6 @@ class NeonBlasterState extends Equatable {
     currentWavePattern,
     waveSpawnCount,
     waveDelayTimer,
+    reviveUsed,
   ];
 }

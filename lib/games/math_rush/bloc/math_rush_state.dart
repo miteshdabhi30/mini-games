@@ -65,6 +65,7 @@ class MathRushState extends Equatable {
   final int level;
   final double timeRemaining;
   final double maxTime;
+  final bool reviveUsed;
 
   const MathRushState({
     this.status = MathRushStatus.initial,
@@ -74,6 +75,7 @@ class MathRushState extends Equatable {
     this.level = 1,
     this.timeRemaining = 5.0,
     this.maxTime = 5.0,
+    this.reviveUsed = false,
   });
 
   MathRushState copyWith({
@@ -84,6 +86,7 @@ class MathRushState extends Equatable {
     int? level,
     double? timeRemaining,
     double? maxTime,
+    bool? reviveUsed,
   }) {
     return MathRushState(
       status: status ?? this.status,
@@ -93,6 +96,7 @@ class MathRushState extends Equatable {
       level: level ?? this.level,
       timeRemaining: timeRemaining ?? this.timeRemaining,
       maxTime: maxTime ?? this.maxTime,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
 
@@ -105,5 +109,6 @@ class MathRushState extends Equatable {
     level,
     timeRemaining,
     maxTime,
+    reviveUsed,
   ];
 }

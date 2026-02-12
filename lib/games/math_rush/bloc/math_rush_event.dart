@@ -41,3 +41,5 @@ class MathRushRestarted extends MathRushEvent {
   @override
   List<Object> get props => [bonusScore];
 }
+
+class MathRushRevived extends MathRushEvent {}

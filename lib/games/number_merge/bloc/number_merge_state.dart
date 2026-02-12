@@ -8,6 +8,7 @@ class NumberMergeState extends Equatable {
   final int highScore;
   final List<List<int>> grid; // 5 columns x 7 rows. 0 = empty.
   final int nextNumber; // Power of 2 (2, 4, 8, 16, 32, 64)
+  final bool reviveUsed;
 
   const NumberMergeState({
     this.status = NumberMergeStatus.initial,
@@ -15,6 +16,7 @@ class NumberMergeState extends Equatable {
     this.highScore = 0,
     this.grid = const [],
     this.nextNumber = 2,
+    this.reviveUsed = false,
   });
 
   NumberMergeState copyWith({
@@ -23,6 +25,7 @@ class NumberMergeState extends Equatable {
     int? highScore,
     List<List<int>>? grid,
     int? nextNumber,
+    bool? reviveUsed,
   }) {
     return NumberMergeState(
       status: status ?? this.status,
@@ -30,9 +33,17 @@ class NumberMergeState extends Equatable {
       highScore: highScore ?? this.highScore,
       grid: grid ?? this.grid,
       nextNumber: nextNumber ?? this.nextNumber,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
 
   @override
-  List<Object?> get props => [status, score, highScore, grid, nextNumber];
+  List<Object?> get props => [
+    status,
+    score,
+    highScore,
+    grid,
+    nextNumber,
+    reviveUsed,
+  ];
 }

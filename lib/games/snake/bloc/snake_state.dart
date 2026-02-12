@@ -29,6 +29,8 @@ class SnakeState extends Equatable {
   final double moveTimer;
   final double moveInterval; // Speed
 
+  final bool reviveUsed;
+
   const SnakeState({
     this.status = SnakeStatus.initial,
     this.snake = const [],
@@ -38,10 +40,10 @@ class SnakeState extends Equatable {
     this.score = 0,
     this.highScore = 0,
     this.columns = 20,
-    this.rows =
-        30, // Dynamic based on screen? Let's fix grid size for simplicity or calculate.
+    this.rows = 30,
     this.moveTimer = 0,
     this.moveInterval = 0.15,
+    this.reviveUsed = false,
   });
 
   SnakeState copyWith({
@@ -56,6 +58,7 @@ class SnakeState extends Equatable {
     int? rows,
     double? moveTimer,
     double? moveInterval,
+    bool? reviveUsed,
   }) {
     return SnakeState(
       status: status ?? this.status,
@@ -69,6 +72,7 @@ class SnakeState extends Equatable {
       rows: rows ?? this.rows,
       moveTimer: moveTimer ?? this.moveTimer,
       moveInterval: moveInterval ?? this.moveInterval,
+      reviveUsed: reviveUsed ?? this.reviveUsed,
     );
   }
 
@@ -85,5 +89,6 @@ class SnakeState extends Equatable {
     rows,
     moveTimer,
     moveInterval,
+    reviveUsed,
   ];
 }

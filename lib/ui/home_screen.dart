@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:green_object/ui/game_screen.dart';
-import 'package:green_object/games/color_match/ui/color_match_screen.dart';
+import 'package:green_object/games/neon_flow/ui/neon_flow_screen.dart';
 import 'package:green_object/games/neon_blaster/ui/neon_blaster_screen.dart';
 import 'package:green_object/games/tower_stack/ui/tower_stack_screen.dart';
 import 'package:green_object/games/snake/ui/snake_screen.dart';
 import 'package:green_object/games/neon_bridge/ui/neon_bridge_screen.dart';
-import 'package:green_object/games/neon_hit/ui/neon_hit_screen.dart';
 import 'package:green_object/games/math_rush/ui/math_rush_screen.dart';
 import 'package:green_object/games/pattern_match/ui/pattern_match_screen.dart';
-import 'package:green_object/games/neon_loop/ui/neon_loop_screen.dart';
 import 'package:green_object/games/number_merge/ui/number_merge_screen.dart';
 
 import 'package:green_object/games/ball_sort/ui/ball_sort_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreenView('HomeScreen');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +46,7 @@ class HomeScreen extends StatelessWidget {
             mainAxisSpacing: 16,
             childAspectRatio: 0.8,
           ),
-          itemCount: 12,
+          itemCount: 10,
           itemBuilder: (context, index) {
             // Game 1: One Button Dodge
             if (index == 0) {
@@ -45,21 +55,25 @@ class HomeScreen extends StatelessWidget {
                 color: const Color(0xFFe94560),
                 icon: Icons.directions_run,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Dodge',
+                  });
                   Navigator.of(
                     context,
                   ).push(MaterialPageRoute(builder: (_) => GameScreen.route()));
                 },
               );
-              // Game 2: Color Match
+              // Game 2: Neon Maze
             } else if (index == 1) {
               return _GameCard(
-                title: "COLOR MATCH",
-                color: Colors.blueAccent,
-                icon: Icons.palette,
+                title: "NEON FLOW",
+                color: Colors.cyanAccent,
+                icon: Icons.timeline,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => ColorMatchScreen.route()),
-                  );
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Neon Flow',
+                  });
+                  Navigator.of(context).push(NeonFlowScreen.route());
                 },
               );
               // Game 3: Neon Blaster
@@ -69,6 +83,9 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.lightBlueAccent,
                 icon: Icons.rocket_launch,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Neon Blaster',
+                  });
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => NeonBlasterScreen.route(),
@@ -83,6 +100,9 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.cyan,
                 icon: Icons.layers,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Tower Stack',
+                  });
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => TowerStackScreen.route()),
                   );
@@ -95,6 +115,9 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.greenAccent,
                 icon: Icons.gesture,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Neon Snake',
+                  });
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => SnakeScreen.route()),
                   );
@@ -107,36 +130,35 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.pinkAccent,
                 icon: Icons.linear_scale, // Or graphic_eq, or similar
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Neon Bridge',
+                  });
                   Navigator.of(context).push(NeonBridgeScreen.route());
                 },
               );
-              // Game 7: Neon Hit
+              // Game 7: Math Rush
             } else if (index == 6) {
-              return _GameCard(
-                title: "NEON HIT",
-                color: Colors.deepOrangeAccent,
-                icon: Icons.my_location,
-                onTap: () {
-                  Navigator.of(context).push(NeonHitScreen.route());
-                },
-              );
-              // Game 8: Math Rush
-            } else if (index == 7) {
               return _GameCard(
                 title: "MATH RUSH",
                 color: Colors.amberAccent,
                 icon: Icons.calculate,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Math Rush',
+                  });
                   Navigator.of(context).push(MathRushScreen.route());
                 },
               );
-              // Game 9: Pattern Match
-            } else if (index == 8) {
+              // Game 8: Pattern Match
+            } else if (index == 7) {
               return _GameCard(
                 title: "PATTERN MATCH",
                 color: Colors.tealAccent,
                 icon: Icons.apps,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Pattern Match',
+                  });
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => PatternMatchScreen.route(),
@@ -144,37 +166,31 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
               );
-              // Game 10: Neon Loop
-            } else if (index == 9) {
-              return _GameCard(
-                title: "NEON LOOP",
-                color: Colors.deepPurpleAccent,
-                icon: Icons.refresh,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => NeonLoopScreen.route()),
-                  );
-                },
-              );
             }
-            // Game 11: Number Merge
-            else if (index == 10) {
+            // Game 9: Number Merge
+            else if (index == 8) {
               return _GameCard(
                 title: "NUMBER MERGE",
                 color: Colors.orangeAccent,
                 icon: Icons.view_week,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Number Merge',
+                  });
                   Navigator.of(context).push(NumberMergeScreen.route());
                 },
               );
             }
-            // Game 12: Ball Sort Puzzle
-            else if (index == 11) {
+            // Game 10: Ball Sort Puzzle
+            else if (index == 9) {
               return _GameCard(
                 title: "BALL SORT PUZZLE",
                 color: Colors.pinkAccent,
                 icon: Icons.sort,
                 onTap: () {
+                  AnalyticsService.instance.logEvent('game_selected', {
+                    'game': 'Ball Sort Puzzle',
+                  });
                   Navigator.of(context).push(BallSortScreen.route());
                 },
               );

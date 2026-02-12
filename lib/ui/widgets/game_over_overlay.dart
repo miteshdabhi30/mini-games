@@ -92,6 +92,7 @@ class GameOverOverlay extends StatelessWidget {
                                           GameRevived(),
                                         );
                                       },
+                                      rewardType: 'revive',
                                     );
                                 if (!rewarded && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(

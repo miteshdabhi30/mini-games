@@ -4,10 +4,25 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:green_object/utils/high_score_store.dart';
 import 'package:green_object/utils/ad_manager.dart';
 
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // await Firebase.initializeApp();
+
+  // Pass all uncaught "fatal" errors from the framework to Crashlytics
+  // FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+  // PlatformDispatcher.instance.onError = (error, stack) {
+  //   FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+  //   return true;
+  // };
+
   await HighScoreStore.init();
   await AdManager.instance.init();
+
   runApp(const MultiGameApp());
 }
 

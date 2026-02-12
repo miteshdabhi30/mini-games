@@ -31,3 +31,7 @@ class BallSortUndo extends BallSortEvent {
 class BallSortNextLevel extends BallSortEvent {
   const BallSortNextLevel();
 }
+
+class BallSortRevived extends BallSortEvent {
+  const BallSortRevived();
+}

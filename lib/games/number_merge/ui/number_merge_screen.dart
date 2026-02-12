@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:green_object/games/number_merge/bloc/number_merge_bloc.dart';
@@ -7,7 +8,7 @@ import 'package:green_object/games/number_merge/bloc/number_merge_state.dart';
 import 'package:green_object/ui/widgets/ad_rectangle.dart';
 import 'package:green_object/utils/ad_manager.dart';
 
-class NumberMergeScreen extends StatelessWidget {
+class NumberMergeScreen extends StatefulWidget {
   const NumberMergeScreen({super.key});
 
   static Route route() {
@@ -20,11 +21,32 @@ class NumberMergeScreen extends StatelessWidget {
   }
 
   @override
+  State<NumberMergeScreen> createState() => _NumberMergeScreenState();
+}
+
+class _NumberMergeScreenState extends State<NumberMergeScreen> {
+  late DateTime _startTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Number Merge');
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocConsumer<NumberMergeBloc, NumberMergeState>(
       listener: (context, state) {
         if (state.status == NumberMergeStatus.gameOver) {
           AdManager.instance.onGameOver();
+          AnalyticsService.instance.logGameEnd(
+            'Number Merge',
+            state.score,
+            DateTime.now().difference(_startTime).inSeconds,
+          );
+        } else if (state.status == NumberMergeStatus.initial) {
+          _startTime = DateTime.now();
         }
       },
       builder: (context, state) {
@@ -281,6 +303,49 @@ class NumberMergeScreen extends StatelessWidget {
                         'PLAY AGAIN',
                         style: GoogleFonts.pressStart2p(fontSize: 14),
                       ),
+                    ),
+                    BlocBuilder<NumberMergeBloc, NumberMergeState>(
+                      buildWhen: (previous, current) =>
+                          previous.reviveUsed != current.reviveUsed,
+                      builder: (context, state) {
+                        if (state.reviveUsed) return const SizedBox.shrink();
+                        return Column(
+                          children: [
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: () async {
+                                final rewarded = await AdManager.instance
+                                    .showRewarded(
+                                      onRewardEarned: () {
+                                        context.read<NumberMergeBloc>().add(
+                                          NumberMergeRevived(),
+                                        );
+                                      },
+                                      rewardType: 'revive',
+                                    );
+                                if (!rewarded && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Ad not ready. Try again soon.",
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white60),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(
+                                "WATCH AD TO CONTINUE",
+                                style: GoogleFonts.pressStart2p(fontSize: 10),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     TextButton(

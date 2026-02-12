@@ -23,3 +23,5 @@ class NumberMergeColumnTapped extends NumberMergeEvent {
 class NumberMergeRestarted extends NumberMergeEvent {
   const NumberMergeRestarted();
 }
+
+class NumberMergeRevived extends NumberMergeEvent {}

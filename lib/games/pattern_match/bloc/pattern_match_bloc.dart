@@ -13,6 +13,30 @@ class PatternMatchBloc extends Bloc<PatternMatchEvent, PatternMatchState> {
     on<PatternMatchShowPattern>(_onShowPattern);
     on<PatternMatchButtonTapped>(_onButtonTapped);
     on<PatternMatchNextRound>(_onNextRound);
+    on<PatternMatchRevived>(_onRevived);
+  }
+
+  Future<void> _onRevived(
+    PatternMatchRevived event,
+    Emitter<PatternMatchState> emit,
+  ) async {
+    if (state.status != PatternMatchStatus.gameOver || state.reviveUsed) return;
+
+    // Revive Logic: Replay current pattern
+    emit(
+      state.copyWith(
+        status: PatternMatchStatus.idle, // Brief idle before show
+        playerInput: [],
+        highlightedButton: null,
+        reviveUsed: true,
+      ),
+    );
+
+    // Trigger show pattern
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!isClosed) {
+      add(const PatternMatchShowPattern());
+    }
   }
 
   Future<void> _onStarted(

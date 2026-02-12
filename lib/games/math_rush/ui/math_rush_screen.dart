@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:green_object/services/analytics_service.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,11 +29,14 @@ class _MathRushScreenState extends State<MathRushScreen>
     with SingleTickerProviderStateMixin {
   Ticker? _ticker;
   double _lastTickTime = 0.0;
+  late DateTime _startTime;
 
   @override
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _startTime = DateTime.now();
+    AnalyticsService.instance.logGameStart('Math Rush');
   }
 
   @override
@@ -62,11 +66,17 @@ class _MathRushScreenState extends State<MathRushScreen>
         if (state.status == MathRushStatus.playing &&
             !(_ticker?.isActive ?? false)) {
           _lastTickTime = 0;
+          _startTime = DateTime.now();
           _ticker?.start();
         } else if (state.status == MathRushStatus.gameOver &&
             (_ticker?.isActive ?? false)) {
           _ticker?.stop();
           AdManager.instance.onGameOver();
+          AnalyticsService.instance.logGameEnd(
+            'Math Rush',
+            state.score,
+            DateTime.now().difference(_startTime).inSeconds,
+          );
         }
       },
       builder: (context, state) {
@@ -434,6 +444,49 @@ class _MathRushScreenState extends State<MathRushScreen>
                         'PLAY AGAIN',
                         style: GoogleFonts.pressStart2p(fontSize: 14),
                       ),
+                    ),
+                    BlocBuilder<MathRushBloc, MathRushState>(
+                      buildWhen: (previous, current) =>
+                          previous.reviveUsed != current.reviveUsed,
+                      builder: (context, state) {
+                        if (state.reviveUsed) return const SizedBox.shrink();
+                        return Column(
+                          children: [
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: () async {
+                                final rewarded = await AdManager.instance
+                                    .showRewarded(
+                                      onRewardEarned: () {
+                                        context.read<MathRushBloc>().add(
+                                          MathRushRevived(),
+                                        );
+                                      },
+                                      rewardType: 'revive',
+                                    );
+                                if (!rewarded && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Ad not ready. Try again soon.",
+                                      ),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white60),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(
+                                "WATCH AD TO CONTINUE",
+                                style: GoogleFonts.pressStart2p(fontSize: 10),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     TextButton(

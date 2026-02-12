@@ -36,3 +36,7 @@ class PatternMatchButtonTapped extends PatternMatchEvent {
 class PatternMatchNextRound extends PatternMatchEvent {
   const PatternMatchNextRound();
 }
+
+class PatternMatchRevived extends PatternMatchEvent {
+  const PatternMatchRevived();
+}
