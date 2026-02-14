@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:equatable/equatable.dart';
 
-enum NeonFlowStatus { initial, playing, levelCompleted }
+enum NeonFlowStatus { initial, playing, levelCompleted, gameOver }
 
 class NeonFlowState extends Equatable {
   final NeonFlowStatus status;
@@ -13,7 +13,7 @@ class NeonFlowState extends Equatable {
   final int level;
   final int score;
   final int highScore;
-  final bool reviveUsed;
+  final int reviveCount;
 
   const NeonFlowState({
     this.status = NeonFlowStatus.initial,
@@ -25,7 +25,7 @@ class NeonFlowState extends Equatable {
     this.level = 1,
     this.score = 0,
     this.highScore = 0,
-    this.reviveUsed = false,
+    this.reviveCount = 0,
   });
 
   NeonFlowState copyWith({
@@ -38,7 +38,7 @@ class NeonFlowState extends Equatable {
     int? level,
     int? score,
     int? highScore,
-    bool? reviveUsed,
+    int? reviveCount,
   }) {
     return NeonFlowState(
       status: status ?? this.status,
@@ -50,7 +50,7 @@ class NeonFlowState extends Equatable {
       level: level ?? this.level,
       score: score ?? this.score,
       highScore: highScore ?? this.highScore,
-      reviveUsed: reviveUsed ?? this.reviveUsed,
+      reviveCount: reviveCount ?? this.reviveCount,
     );
   }
 
@@ -65,6 +65,6 @@ class NeonFlowState extends Equatable {
     level,
     score,
     highScore,
-    reviveUsed,
+    reviveCount,
   ];
 }

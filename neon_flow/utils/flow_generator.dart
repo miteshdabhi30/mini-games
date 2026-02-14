@@ -2,9 +2,10 @@ import 'dart:math';
 
 class FlowGenerator {
   final int size;
+  final int minFlows;
   final Random _random = Random();
 
-  FlowGenerator(this.size);
+  FlowGenerator(this.size, {this.minFlows = 0});
 
   Map<String, dynamic> generate() {
     // 0 = empty
@@ -66,8 +67,8 @@ class FlowGenerator {
     // but ideally we'd extend existing paths to fill them)
 
     // Ensure we have enough paths for a valid level
-    int minPaths = (size / 2).ceil() + 1; // e.g. 5->3, 6->4.
-    if (paths.length < minPaths) {
+    int targetMin = minFlows > 0 ? minFlows : (size / 2).ceil() + 1;
+    if (paths.length < targetMin) {
       // Retry if generation was poor
       return generate();
     }

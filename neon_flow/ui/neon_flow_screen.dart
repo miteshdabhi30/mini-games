@@ -55,11 +55,78 @@ class _NeonFlowScreenState extends State<NeonFlowScreen> {
           // Layout
           final screenWidth = MediaQuery.of(context).size.width;
           final boardValues = screenWidth - 32;
+          final isGameOver = state.status == NeonFlowStatus.gameOver;
 
           return SafeArea(
             child: Column(
               children: [
                 _buildHeader(state),
+                if (isGameOver)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.2),
+                      border: Border.all(color: Colors.redAccent, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          "NO MOVES POSSIBLE!",
+                          style: GoogleFonts.pressStart2p(
+                            color: Colors.redAccent,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (state.reviveCount < 2)
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amberAccent,
+                              foregroundColor: Colors.black,
+                            ),
+                            onPressed: () async {
+                              final rewarded = await AdManager.instance
+                                  .showRewarded(
+                                    onRewardEarned: () {
+                                      context.read<NeonFlowBloc>().add(
+                                        const NeonFlowRevived(),
+                                      );
+                                    },
+                                    rewardType: 'revive',
+                                  );
+                              if (!rewarded && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Ad not ready")),
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.play_circle_filled,
+                              size: 16,
+                            ),
+                            label: Text(
+                              "REVIVE (AD)",
+                              style: GoogleFonts.pressStart2p(fontSize: 10),
+                            ),
+                          ),
+                        if (state.reviveCount >= 2)
+                          Text(
+                            "GAME OVER",
+                            style: GoogleFonts.pressStart2p(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
                 Expanded(
                   child: Center(
                     child: GestureDetector(
@@ -106,6 +173,9 @@ class _NeonFlowScreenState extends State<NeonFlowScreen> {
     double size,
     int gridSize,
   ) {
+    if (context.read<NeonFlowBloc>().state.status == NeonFlowStatus.gameOver)
+      return;
+
     final cellSize = size / gridSize;
     final int c = (details.localPosition.dx / cellSize).floor();
     final int r = (details.localPosition.dy / cellSize).floor();
@@ -121,6 +191,9 @@ class _NeonFlowScreenState extends State<NeonFlowScreen> {
     double size,
     int gridSize,
   ) {
+    if (context.read<NeonFlowBloc>().state.status == NeonFlowStatus.gameOver)
+      return;
+
     final cellSize = size / gridSize;
     final int c = (details.localPosition.dx / cellSize).floor();
     final int r = (details.localPosition.dy / cellSize).floor();
@@ -157,24 +230,56 @@ class _NeonFlowScreenState extends State<NeonFlowScreen> {
           ),
           Row(
             children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.lightbulb_outline,
-                  color: Colors.amberAccent,
-                ),
-                onPressed: () async {
-                  final rewarded = await AdManager.instance.showRewarded(
-                    onRewardEarned: () {
-                      context.read<NeonFlowBloc>().add(const NeonFlowHint());
-                    },
-                    rewardType: 'hint',
-                  );
-                  if (!rewarded && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Ad not ready")),
-                    );
-                  }
-                },
+              // IconButton(
+              //   icon: const Icon(
+              //     Icons.lightbulb_outline,
+              //     color: Colors.amberAccent,
+              //   ),
+              //   onPressed: () async {
+              //     if (state.status == NeonFlowStatus.gameOver) return;
+              //
+              //     final rewarded = await AdManager.instance.showRewarded(
+              //       onRewardEarned: () {
+              //         context.read<NeonFlowBloc>().add(const NeonFlowHint());
+              //       },
+              //       rewardType: 'hint',
+              //     );
+              //     if (!rewarded && context.mounted) {
+              //       ScaffoldMessenger.of(context).showSnackBar(
+              //         const SnackBar(content: Text("Ad not ready")),
+              //       );
+              //     }
+              //   },
+              // ),
+              // const SizedBox(width: 16),
+              // IconButton(
+              //   icon: const Icon(Icons.refresh, color: Colors.white),
+              //   onPressed: () {
+              //     context.read<NeonFlowBloc>().add(
+              //       const NeonFlowRestartLevel(),
+              //     );
+              //   },
+              // ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "BEST",
+                    style: GoogleFonts.pressStart2p(
+                      color: Colors.amberAccent,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "${state.highScore}",
+                    style: GoogleFonts.pressStart2p(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 16),
               Column(

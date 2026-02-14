@@ -44,3 +44,7 @@ class NeonFlowRevived extends NeonFlowEvent {
 class NeonFlowHint extends NeonFlowEvent {
   const NeonFlowHint();
 }
+
+class NeonFlowRestartLevel extends NeonFlowEvent {
+  const NeonFlowRestartLevel();
+}
